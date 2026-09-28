@@ -2,7 +2,12 @@
 <html>
 <head>
   <base target="_top">
-  <title>ระบบแจ้งผลการพิจารณาเลื่อนเงินเดือน โรงเรียนบ้านคุ้ม (ประสารราษฎร์วิทยาา)</title> 
+  <!-- คำสั่งปรับสเกลหน้าจอมือถืออัตโนมัติ -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  
+  <title>ระบบแจ้งผล การพิจารณาเลื่อนเงินเดือน โรงเรียนบ้านคุ้ม (ประสารราษฎร์วิทยาา)</title> 
+  <link rel="icon" type="image/png" href="https://img1.pic.in.th/images/unnamed-5069e5719cdaa03a4c.png">
+  <link rel="apple-touch-icon" href="https://img1.pic.in.th/images/unnamed-5069e5719cdaa03a4c.png">
   <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Sarabun:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -10,14 +15,22 @@
     :root { --primary: #1a237e; --accent: #4285f4; --success: #2e7d32; --bg: #f4f7f6; --danger: #d32f2f; --orange: #e65100; --pink: #e91e63; }
     * { box-sizing: border-box; }
     
- body { 
+    body { 
       font-family: 'Kanit', sans-serif; 
-      background: linear-gradient(to bottom, #1b5e20 0%);
+      background: linear-gradient(to bottom, #1b5e20 0%, #ffffff 100%);
       background-attachment: fixed; margin: 0; display: flex; flex-direction: column; min-height: 100vh; 
     }
     
     .main-container { flex: 1; display: flex; align-items: center; justify-content: center; padding: 20px; }
     .search-container { background: rgba(255, 255, 255, 0.95); padding: 40px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); text-align: center; width: 100%; max-width: 480px; backdrop-filter: blur(10px); }
+    
+    /* โค้ดปรับขนาดกล่องเฉพาะในจอมือถือ */
+    @media (max-width: 600px) {
+      .main-container { padding: 10px; }
+      .search-container { padding: 25px 20px; width: 100%; max-width: 100%; border-radius: 15px; }
+      .search-container h2 { font-size: 20px; }
+      .btn-main { padding: 12px; font-size: 16px; }
+    }
     
     input[type="text"], input[type="number"], select, textarea, input[type="file"] { width: 100%; padding: 12px 15px; margin: 8px 0 15px; border: 1.5px solid #e0e0e0; border-radius: 8px; font-size: 16px; font-family: 'Kanit'; outline: none; transition: 0.3s; background: #fff;}
     input:focus, select:focus, textarea:focus { border-color: var(--accent); }
@@ -120,12 +133,10 @@
 </head>
 <body>
 
-<div class="main-container">
+  <div class="main-container">
     <div class="search-container">
-      <!-- เพิ่มรูปลงโก้ตรงนี้ -->
       <img src="https://img1.pic.in.th/images/unnamed-5069e5719cdaa03a4c.png" style="max-height: 100px; margin-bottom: 15px;">
-      
-      <h2 style="color: var(--primary); margin-top:0;">ระบบแจ้งผล การพิจารณาเลื่อนเงินเดือน โรงเรียนบ้านคุ้ม (ประสารราษฎร์วิทยาา)</h2>
+      <h2 style="color: var(--primary); margin-top:0;">ระบบแจ้งผล การพิจารณาเลื่อนเงินเดือน โรงเรียนบ้านคุ้ม (ประสารราษฎร์วิทยาา)</h2> 
       <p style="color: #666; margin-bottom: 25px;">กรุณากรอกเลขบัตรประจำตัวประชาชน เพื่อดูผลการพิจารณา</p>
       <form id="searchForm">
         <input type="text" id="employeeId" placeholder="กรอกรหัสประจำตัว 13 หลัก" required>
@@ -392,30 +403,19 @@
   <script>
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxzCzaOqaF0TkoHyOuRfFaP5BWmU_eb7H9hj2DIb-wcJ5d8lMCYjArqkXCdelMHEeAY9A/exec';
     
-    // ฟังก์ชันเชื่อมต่อกับ Google Apps Script (แก้ไขระบบหลบหลีก CORS Block ให้สมบูรณ์แบบ 100%)
     async function callBackend(action, payload = {}) {
       try {
-        // แก้ไข URL อัตโนมัติ หากเป็นบัญชีองค์กร จะตัด /a/domain/ ออกเพื่อให้ใช้งานข้ามโดเมนได้
-        let safeUrl = SCRIPT_URL;
-        if (safeUrl.includes('/a/')) {
-          safeUrl = safeUrl.replace(/\/a\/[^\/]+\//, '/'); 
-          safeUrl = safeUrl.replace(/\/a\/macros\/[^\/]+\//, '/macros/');
-        }
-
-        // ใช้ URLSearchParams แพ็คข้อมูล แทนการส่ง JSON ตรงๆ เพื่อหลอกเบราว์เซอร์ให้คิดว่านี่คือการ Submit Form ปกติ (ทะลุ CORS)
-        const params = new URLSearchParams();
-        params.append('data', JSON.stringify({ action: action, ...payload }));
-
-        const response = await fetch(safeUrl, {
+        // แก้ไขให้เป็นการส่งข้อมูลแบบตรงไปตรงมา ไม่ตัดแปลง URL แล้ว
+        const response = await fetch(SCRIPT_URL, {
           method: 'POST',
-          body: params
+          body: JSON.stringify({ action: action, ...payload }),
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' }
         });
-        
         const result = await response.json();
         if (!result.success) throw new Error(result.error);
         return result.data;
       } catch (error) {
-        throw new Error('การเชื่อมต่อล้มเหลว หรือถูกบล็อก: ' + error.message);
+        throw new Error('การเชื่อมต่อล้มเหลว หรือถูกบล็อก กรุณารีเฟรชหน้าเว็บแล้วลองใหม่: ' + error.message);
       }
     }
 
@@ -432,7 +432,10 @@
 
     function showAdminLogin() {
       Swal.fire({
-        title: 'ผู้ดูแลระบบ', background: '#121212', color: '#ffffff',
+        title: 'ผู้ดูแลระบบ', 
+        imageUrl: 'https://img1.pic.in.th/images/unnamed-5069e5719cdaa03a4c.png',
+        imageHeight: 80,
+        background: '#121212', color: '#ffffff',
         html: `<input id="swal-user" class="neon-input" placeholder="Username"><input id="swal-pass" type="password" class="neon-input" placeholder="Password">`,
         focusConfirm: false, showCancelButton: true, confirmButtonText: 'เข้าสู่ระบบ', confirmButtonColor: '#00e5ff',
         preConfirm: () => { return { user: document.getElementById('swal-user').value, pass: document.getElementById('swal-pass').value }; }
