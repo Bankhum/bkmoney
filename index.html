@@ -5,7 +5,7 @@
   <!-- คำสั่งปรับสเกลหน้าจอมือถืออัตโนมัติ -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   
-  <title>ระบบแจ้งผล การพิจารณาเลื่อนเงินเดือน โรงเรียนบ้านคุ้ม (ประสารราษฎร์วิทยาา)</title> 
+  <title>ระบบแจ้งผล การพิจารณาเลื่อนเงินเดือน โรงเรียนบ้านคุ้ม (ประสารราษฎร์วิทยา)</title> 
   <link rel="icon" type="image/png" href="https://img1.pic.in.th/images/unnamed-5069e5719cdaa03a4c.png">
   <link rel="apple-touch-icon" href="https://img1.pic.in.th/images/unnamed-5069e5719cdaa03a4c.png">
   <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Sarabun:wght@400;500;700&display=swap" rel="stylesheet">
@@ -28,7 +28,7 @@
     @media (max-width: 600px) {
       .main-container { padding: 10px; }
       .search-container { padding: 25px 20px; width: 100%; max-width: 100%; border-radius: 15px; }
-      .search-container h2 { font-size: 20px; }
+      .search-container h2 { font-size: 18px; }
       .btn-main { padding: 12px; font-size: 16px; }
     }
     
@@ -40,9 +40,14 @@
     .btn-main { width: 100%; padding: 14px; background: var(--primary); color: #fff; font-size: 18px; }
     .btn-main:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(26,35,126,0.3); }
 
-    .fab { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; background: rgba(26, 35, 126, 0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 100; cursor: pointer; transition: 0.3s; backdrop-filter: blur(5px); }
+    /* ปุ่มลอยด้านล่างขวา */
+    .fab-container { position: fixed; bottom: 30px; right: 30px; display: flex; flex-direction: column; gap: 10px; z-index: 100; }
+    .fab { width: 55px; height: 55px; background: rgba(26, 35, 126, 0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 22px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); cursor: pointer; transition: 0.3s; backdrop-filter: blur(5px); }
     .fab:hover { transform: scale(1.1); background: rgba(26, 35, 126, 1); }
-    .neon-input { width: 85%; padding: 12px; margin: 10px auto; display: block; background: #1a1a1a; border: 1px solid #00e5ff; color: #00e5ff; border-radius: 8px; text-shadow: 0 0 5px #00e5ff; box-shadow: 0 0 8px rgba(0, 229, 255, 0.4); outline: none; font-family: 'Kanit', sans-serif; font-size: 16px; }
+
+    /* Footer เปลี่ยนเป็นสีน้ำเงิน */
+    .main-footer { text-align: center; padding: 20px; color: #1a237e; font-size: 14px; font-weight: 500; width: 100%; }
+    .img-preview { max-width: 200px; max-height: 120px; border: 1px solid #ddd; border-radius: 8px; display: none; margin-top: 10px; padding: 5px; background: #fff; }
 
     /* Modals */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
@@ -101,10 +106,6 @@
     /* PDPA Note */
     .pdpa-note { color: var(--danger); font-size: 12px; margin-top: 25px; font-weight: bold; text-align: center; border-top: 1px dashed #ddd; padding-top: 15px; }
 
-    /* Footer */
-    .main-footer { text-align: center; padding: 20px; color: rgba(255,255,255,0.9); font-size: 14px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); width: 100%; }
-    .img-preview { max-width: 200px; max-height: 120px; border: 1px solid #ddd; border-radius: 8px; display: none; margin-top: 10px; padding: 5px; background: #fff; }
-
     @keyframes pulse-gold {
       0% { box-shadow: 0 0 0 0 rgba(251, 140, 0, 0.7); transform: scale(1); }
       70% { box-shadow: 0 0 0 15px rgba(251, 140, 0, 0); transform: scale(1.05); }
@@ -115,7 +116,7 @@
     @media print {
       @page { size: A4 portrait; margin: 10mm; }
       body { background: #fff !important; }
-      .main-container, .fab, .modal-footer, .modal-header, .main-footer, #adminModal, #selectRoundModal { display: none !important; }
+      .main-container, .fab-container, .modal-footer, .modal-header, .main-footer, #adminModal, #selectRoundModal { display: none !important; }
       #resultModal { position: absolute !important; top: 0; left: 0; width: 100%; display: block !important; background: none !important; padding: 0 !important; }
       #resultModal .modal-content { box-shadow: none !important; border: none !important; width: 100% !important; max-height: none !important; margin: 0 !important; }
       #resultModal .modal-body { padding: 0 !important; }
@@ -136,7 +137,7 @@
   <div class="main-container">
     <div class="search-container">
       <img src="https://img1.pic.in.th/images/unnamed-5069e5719cdaa03a4c.png" style="max-height: 100px; margin-bottom: 15px;">
-      <h2 style="color: var(--primary); margin-top:0;">ระบบแจ้งผล การพิจารณาเลื่อนเงินเดือน โรงเรียนบ้านคุ้ม (ประสารราษฎร์วิทยาา)</h2> 
+      <h2 style="color: var(--primary); margin-top:0;">ระบบแจ้งผล<br>การพิจารณาเลื่อนเงินเดือน โรงเรียนบ้านคุ้ม (ประสารราษฎร์วิทยา)</h2> 
       <p style="color: #666; margin-bottom: 25px;">กรุณากรอกเลขบัตรประจำตัวประชาชน เพื่อดูผลการพิจารณา</p>
       <form id="searchForm">
         <input type="text" id="employeeId" placeholder="กรอกรหัสประจำตัว 13 หลัก" required>
@@ -146,10 +147,14 @@
   </div>
 
   <footer class="main-footer"> 
-    สงวนสิทธิ์ 2026 พัฒนาโดย นายดีลาภ ปราบสงบ ครูชำนาญการพิเศษ โรงเรียนบ้านคุ้ม (ประสารราษฎร์วิทยาา) สพป.แพร่ เขต 1 
+    สงวนสิทธิ์ 2026 พัฒนาโดย นายดีลาภ ปราบสงบ ครูชำนาญการพิเศษ โรงเรียนบ้านคุ้ม (ประสารราษฎร์วิทยา) สพป.แพร่ เขต 1 
   </footer>
 
-  <div class="fab" onclick="showAdminLogin()">⚙️</div>
+  <!-- ปุ่มลอยมุมขวาล่าง (ติดตั้งแอป และ ตั้งค่าแอดมิน) -->
+  <div class="fab-container">
+    <div class="fab" onclick="showInstallGuide()" title="ติดตั้งแอปบนหน้าจอ">📱</div>
+    <div class="fab" onclick="showAdminLogin()" title="ผู้ดูแลระบบ">⚙️</div>
+  </div>
 
   <div class="modal-overlay" id="selectRoundModal">
     <div class="modal-content" style="max-width: 500px;">
@@ -321,7 +326,7 @@
 
                 <div class="form-group"><label>โรงเรียน</label> 
                   <select id="f_school">
-                    <option value="โรงเรียนบ้านคุ้ม (ประสารราษฎร์วิทยาา)">โรงเรียนบ้านคุ้ม (ประสารราษฎร์วิทยาา)</option>
+                    <option value="โรงเรียนบ้านคุ้ม (ประสารราษฎร์วิทยา)">โรงเรียนบ้านคุ้ม (ประสารราษฎร์วิทยา)</option>
                     <option value="โรงเรียนบ้านวังดิน(วังดินราษฎร์บำรุง)">โรงเรียนบ้านวังดิน (วังดินราษฎร์บำรุง)</option>
                   </select>
                 </div>
@@ -405,7 +410,6 @@
     
     async function callBackend(action, payload = {}) {
       try {
-        // แก้ไขให้เป็นการส่งข้อมูลแบบตรงไปตรงมา ไม่ตัดแปลง URL แล้ว
         const response = await fetch(SCRIPT_URL, {
           method: 'POST',
           body: JSON.stringify({ action: action, ...payload }),
@@ -417,6 +421,25 @@
       } catch (error) {
         throw new Error('การเชื่อมต่อล้มเหลว หรือถูกบล็อก กรุณารีเฟรชหน้าเว็บแล้วลองใหม่: ' + error.message);
       }
+    }
+
+    // ฟังก์ชันแสดงคำแนะนำวิธีติดตั้งแอปบนหน้าจอมือถือ
+    function showInstallGuide() {
+      Swal.fire({
+        title: '📱 วิธีติดตั้งแอปบนหน้าจอ',
+        html: `
+          <div style="text-align: left; font-size: 15px; line-height: 1.6;">
+            <b>สำหรับ Android (Chrome):</b><br>
+            1. แตะที่ปุ่ม <b>จุด 3 จุด</b> มุมขวาบนของเบราว์เซอร์<br>
+            2. เลือกเมนู <b>"เพิ่มไปยังหน้าจอหลัก"</b> หรือ <b>"ติดตั้งแอป"</b><br><br>
+            <b>สำหรับ iPhone (Safari):</b><br>
+            1. แตะที่ปุ่ม <b>แชร์ (Share)</b> ด้านล่างจอ<br>
+            2. เลื่อนหาและเลือก <b>"เพิ่มไปยังหน้าจอโฮม" (Add to Home Screen)</b>
+          </div>
+        `,
+        confirmButtonText: 'เข้าใจแล้ว',
+        confirmButtonColor: '#1a237e'
+      });
     }
 
     let currentId = ''; let currentRound = ''; let currentFiscalYear = '';
