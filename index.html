@@ -12,7 +12,7 @@
     
  body { 
       font-family: 'Kanit', sans-serif; 
-      background: linear-gradient(to bottom, #1b5e20 0%, #ffffff 100%);
+      background: linear-gradient(to bottom, #1b5e20 0%);
       background-attachment: fixed; margin: 0; display: flex; flex-direction: column; min-height: 100vh; 
     }
     
@@ -120,9 +120,12 @@
 </head>
 <body>
 
-  <div class="main-container">
+<div class="main-container">
     <div class="search-container">
-      <h2 style="color: var(--primary); margin-top:0;">ระบบแจ้งผล การพิจารณาเลื่อนเงินเดือน โรงเรียนบ้านคุ้ม (ประสารราษฎร์วิทยาา)</h2> 
+      <!-- เพิ่มรูปลงโก้ตรงนี้ -->
+      <img src="https://img1.pic.in.th/images/unnamed-5069e5719cdaa03a4c.png" style="max-height: 100px; margin-bottom: 15px;">
+      
+      <h2 style="color: var(--primary); margin-top:0;">ระบบแจ้งผล การพิจารณาเลื่อนเงินเดือน โรงเรียนบ้านคุ้ม (ประสารราษฎร์วิทยาา)</h2>
       <p style="color: #666; margin-bottom: 25px;">กรุณากรอกเลขบัตรประจำตัวประชาชน เพื่อดูผลการพิจารณา</p>
       <form id="searchForm">
         <input type="text" id="employeeId" placeholder="กรอกรหัสประจำตัว 13 หลัก" required>
