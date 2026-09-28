@@ -406,20 +406,39 @@
 
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script>
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxMxPVigt7MOjEjcyu3YLsVLXxDW4Urcm4el2CH_i07rf4GRDAerARpqXcEhEhlxlEAAA/exec';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw_DOR4Er53bMWkYvJP46UDaaYdxyNEMEJI9cbrH7x382J_rQQQTolM8VLlZIC5KXs8/exec';
     
     async function callBackend(action, payload = {}) {
       try {
         const response = await fetch(SCRIPT_URL, {
           method: 'POST',
-          body: JSON.stringify({ action: action, ...payload }),
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: action, ...payload })
         });
-        const result = await response.json();
-        if (!result.success) throw new Error(result.error);
+
+        const rawText = await response.text();
+
+        let result;
+        try {
+          result = JSON.parse(rawText);
+        } catch (parseError) {
+          throw new Error(
+            'API ส่งข้อมูลกลับมาไม่ใช่ JSON: ' +
+            rawText.substring(0, 200)
+          );
+        }
+
+        if (!result.success) {
+          throw new Error(result.error || 'เกิดข้อผิดพลาดจาก API');
+        }
+
         return result.data;
+
       } catch (error) {
-        throw new Error('การเชื่อมต่อล้มเหลว หรือถูกบล็อก กรุณารีเฟรชหน้าเว็บแล้วลองใหม่: ' + error.message);
+        throw new Error(
+          'การเชื่อมต่อล้มเหลว กรุณาตรวจสอบ SCRIPT_URL และ Deploy ของ Google Apps Script: ' +
+          error.message
+        );
       }
     }
 
