@@ -403,6 +403,28 @@
 
   <!-- 2. โค้ด JavaScript หลักของระบบเริ่มต้นที่นี่ -->
   <script>
+    // 👇👇👇 เอา URL ของเว็บแอป (ที่ขึ้นต้นด้วย https://script.google.com/...) มาใส่ในเครื่องหมายคำพูดด้านล่างนี้ครับ
+    const SCRIPT_URL = 'https://script.google.com/a/macros/bankhum.ac.th/s/AKfycbyfftid5RdjnjmFesvPSuUg1TxC_Ju_rl3MEn2WTvOq5UQS0gUhHeihz534yjhXgN73cw/exec';
+    // 👆👆👆
+    
+    // ฟังก์ชันเชื่อมต่อกับ Google Apps Script (Backend)
+    async function callBackend(action, payload = {}) {
+      try {
+        const response = await fetch(SCRIPT_URL, {
+          method: 'POST',
+          body: JSON.stringify({ action: action, ...payload }),
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+        });
+        const result = await response.json();
+        if (!result.success) {
+          throw new Error(result.error);
+        }
+        return result.data;
+      } catch (error) {
+        throw error;
+      }
+    }
+
     let currentId = '';
     let currentRound = '';
     let currentFiscalYear = '';
@@ -436,11 +458,15 @@
         }
       }).then((result) => {
         if (result.isConfirmed) {
-          Swal.fire({ title: 'กำลังตรวจสอบ...', didOpen: () => Swal.showLoading() });
-          google.script.run.withSuccessHandler(() => {
-            Swal.close(); openAdminModal();
-          }).withFailureHandler(err => Swal.fire({ icon: 'error', title: 'ผิดพลาด', text: err.message, background: '#121212', color: '#ff4444' }))
-            .verifyAdminLogin(result.value.user, result.value.pass);
+          Swal.fire({ title: 'กำลังตรวจสอบ...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+          
+          callBackend('verifyAdminLogin', { username: result.value.user, password: result.value.pass })
+            .then(() => {
+              Swal.close(); openAdminModal();
+            })
+            .catch(err => {
+              Swal.fire({ icon: 'error', title: 'ผิดพลาด', text: err.message, background: '#121212', color: '#ff4444' });
+            });
         }
       });
     }
@@ -519,35 +545,37 @@
       const id = document.getElementById('employeeId').value;
       Swal.fire({ title: 'กำลังค้นหา...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
       
-      google.script.run.withSuccessHandler(response => {
-        Swal.close();
-        const records = response.records;
-        const settings = response.settings;
-        
-        if (records.length === 1) {
-            displayResultData(records[0], settings, false);
-        } else if (records.length > 1) {
-            // หากมีหลายบันทึก แสดง Modal ให้เลือกปีงบและรอบ
-            const container = document.getElementById('roundListContainer');
-            container.innerHTML = '';
-            
-            // เรียงลำดับจากล่าสุดไปเก่าสุด
-            records.sort((a, b) => b.fiscal_year - a.fiscal_year); 
+      callBackend('searchEmployee', { employeeId: id })
+        .then(response => {
+          Swal.close();
+          const records = response.records;
+          const settings = response.settings;
+          
+          if (records.length === 1) {
+              displayResultData(records[0], settings, false);
+          } else if (records.length > 1) {
+              // หากมีหลายบันทึก แสดง Modal ให้เลือกปีงบและรอบ
+              const container = document.getElementById('roundListContainer');
+              container.innerHTML = '';
+              
+              // เรียงลำดับจากล่าสุดไปเก่าสุด
+              records.sort((a, b) => b.fiscal_year - a.fiscal_year); 
 
-            records.forEach(rec => {
-                const btn = document.createElement('button');
-                btn.className = 'btn-main';
-                btn.style.margin = '10px 0';
-                btn.innerHTML = `ปีงบประมาณ ${rec.fiscal_year || '-'} <br><small>${rec.round_name}</small>`;
-                btn.onclick = () => {
-                    closeModal('selectRoundModal');
-                    displayResultData(rec, settings, false);
-                };
-                container.appendChild(btn);
-            });
-            document.getElementById('selectRoundModal').style.display = 'flex';
-        }
-      }).withFailureHandler(err => Swal.fire('ไม่พบข้อมูล', err.message, 'error')).searchEmployee(id);
+              records.forEach(rec => {
+                  const btn = document.createElement('button');
+                  btn.className = 'btn-main';
+                  btn.style.margin = '10px 0';
+                  btn.innerHTML = `ปีงบประมาณ ${rec.fiscal_year || '-'} <br><small>${rec.round_name}</small>`;
+                  btn.onclick = () => {
+                      closeModal('selectRoundModal');
+                      displayResultData(rec, settings, false);
+                  };
+                  container.appendChild(btn);
+              });
+              document.getElementById('selectRoundModal').style.display = 'flex';
+          }
+        })
+        .catch(err => Swal.fire('ไม่พบข้อมูล', err.message, 'error'));
     };
 
     document.getElementById('ackBtn').onclick = () => {
@@ -566,29 +594,32 @@
         
         if (rating) {
           Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-          google.script.run.withSuccessHandler(() => {
-            Swal.fire('สำเร็จ!', 'บันทึกการรับทราบผลเรียบร้อยแล้ว', 'success');
-            const ackBtn = document.getElementById('ackBtn');
-            ackBtn.disabled = true;
-            ackBtn.classList.remove('btn-animate');
-            ackBtn.style.background = '#9e9e9e';
-            ackBtn.textContent = '✅ ท่านได้รับทราบผลแล้ว';
-          }).acknowledgeResult(currentId, currentRound, currentFiscalYear, rating);
+          
+          callBackend('acknowledgeResult', { employeeId: currentId, roundName: currentRound, fiscalYear: currentFiscalYear, rating: rating })
+            .then(() => {
+              Swal.fire('สำเร็จ!', 'บันทึกการรับทราบผลเรียบร้อยแล้ว', 'success');
+              const ackBtn = document.getElementById('ackBtn');
+              ackBtn.disabled = true;
+              ackBtn.classList.remove('btn-animate');
+              ackBtn.style.background = '#9e9e9e';
+              ackBtn.textContent = '✅ ท่านได้รับทราบผลแล้ว';
+            })
+            .catch(err => Swal.fire('ผิดพลาด', err.message, 'error'));
         }
       });
     };
 
     // เปิดดูรายงานจากฝั่ง Admin
     function viewReportFromAdmin(empId, rName, fYear) {
-      Swal.fire({ title: 'กำลังโหลดข้อมูล...', didOpen: () => Swal.showLoading() });
-      google.script.run
-        .withSuccessHandler(response => {
+      Swal.fire({ title: 'กำลังโหลดข้อมูล...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+      
+      callBackend('searchEmployee', { employeeId: empId })
+        .then(response => {
           Swal.close();
           const rec = response.records.find(r => r.round_name === rName && r.fiscal_year == fYear) || response.records[0];
           displayResultData(rec, response.settings, true);
         })
-        .withFailureHandler(err => Swal.fire('ผิดพลาด', err.message, 'error'))
-        .searchEmployee(empId);
+        .catch(err => Swal.fire('ผิดพลาด', err.message, 'error'));
     }
 
     function openAdminModal() {
@@ -596,38 +627,42 @@
       setNowDate();
       loadDashboard();
       
-      google.script.run.withSuccessHandler(set => {
-        allSettingsLocal = set;
-        document.getElementById('set_director').value = set.directorName || '';
-        if(set.logoData) { document.getElementById('preview_logo').src = set.logoData; document.getElementById('preview_logo').style.display = 'block'; }
-        if(set.signatureData) { document.getElementById('preview_sig').src = set.signatureData; document.getElementById('preview_sig').style.display = 'block'; }
-        if(set.stampData) { document.getElementById('preview_stamp').src = set.stampData; document.getElementById('preview_stamp').style.display = 'block'; }
-        base64Logo = ''; base64Sig = ''; base64Stamp = ''; 
-      }).getAdminSettingsPreview();
+      callBackend('getAdminSettingsPreview')
+        .then(set => {
+          allSettingsLocal = set;
+          document.getElementById('set_director').value = set.directorName || '';
+          if(set.logoData) { document.getElementById('preview_logo').src = set.logoData; document.getElementById('preview_logo').style.display = 'block'; }
+          if(set.signatureData) { document.getElementById('preview_sig').src = set.signatureData; document.getElementById('preview_sig').style.display = 'block'; }
+          if(set.stampData) { document.getElementById('preview_stamp').src = set.stampData; document.getElementById('preview_stamp').style.display = 'block'; }
+          base64Logo = ''; base64Sig = ''; base64Stamp = ''; 
+        })
+        .catch(err => console.error(err));
     }
 
     function loadDashboard() {
-      google.script.run.withSuccessHandler(s => {
-        dashboardDataList = s.list;
-        
-        // ดึงปีงบประมาณที่ไม่ซ้ำออกมา และใส่ใน Dropdown ตัวกรอง
-        const years = [...new Set(dashboardDataList.map(item => item.fiscal_year).filter(y => y && y !== 'ไม่ระบุ'))].sort().reverse();
-        const yearSelect = document.getElementById('dashFiscalYear');
-        
-        if (years.length > 0) {
-            yearSelect.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
-            // เซ็ตเป็นปีล่าสุดและรอบล่าสุดที่มีโดยอัตโนมัติ
-            yearSelect.value = years[0]; 
-            const roundsThisYear = dashboardDataList.filter(item => item.fiscal_year == years[0]).map(item => item.round);
-            const roundSelect = document.getElementById('dashRound');
-            if(roundsThisYear.includes('ครั้งที่ 2 (1 ตุลาคม)')) roundSelect.value = 'ครั้งที่ 2 (1 ตุลาคม)';
-            else if (roundsThisYear.includes('ครั้งที่ 1 (1 เมษายน)')) roundSelect.value = 'ครั้งที่ 1 (1 เมษายน)';
-        } else {
-            yearSelect.innerHTML = '<option value="all">ทั้งหมด</option>';
-        }
+      callBackend('getAdminDashboardData')
+        .then(s => {
+          dashboardDataList = s.list;
+          
+          // ดึงปีงบประมาณที่ไม่ซ้ำออกมา และใส่ใน Dropdown ตัวกรอง
+          const years = [...new Set(dashboardDataList.map(item => item.fiscal_year).filter(y => y && y !== 'ไม่ระบุ'))].sort().reverse();
+          const yearSelect = document.getElementById('dashFiscalYear');
+          
+          if (years.length > 0) {
+              yearSelect.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+              // เซ็ตเป็นปีล่าสุดและรอบล่าสุดที่มีโดยอัตโนมัติ
+              yearSelect.value = years[0]; 
+              const roundsThisYear = dashboardDataList.filter(item => item.fiscal_year == years[0]).map(item => item.round);
+              const roundSelect = document.getElementById('dashRound');
+              if(roundsThisYear.includes('ครั้งที่ 2 (1 ตุลาคม)')) roundSelect.value = 'ครั้งที่ 2 (1 ตุลาคม)';
+              else if (roundsThisYear.includes('ครั้งที่ 1 (1 เมษายน)')) roundSelect.value = 'ครั้งที่ 1 (1 เมษายน)';
+          } else {
+              yearSelect.innerHTML = '<option value="all">ทั้งหมด</option>';
+          }
 
-        renderDashboard();
-      }).getAdminDashboardData();
+          renderDashboard();
+        })
+        .catch(err => console.error(err));
     }
 
     // ฟังก์ชันคำนวณสถิติและเรนเดอร์ตาราง + กราฟ 
@@ -773,13 +808,16 @@
       
       if(!data.employee_id || !data.full_name || !data.fiscal_year) return Swal.fire('แจ้งเตือน', 'กรุณากรอกรหัสประจำตัว ชื่อ-สกุล และปีงบประมาณ', 'warning');
 
-      Swal.fire({title: 'กำลังบันทึก...', didOpen:()=>Swal.showLoading()});
-      google.script.run.withSuccessHandler(msg => {
-        Swal.fire('สำเร็จ', msg, 'success');
-        document.getElementById('adminDataForm').reset();
-        document.getElementById('f_fiscal_year').value = new Date().getFullYear() + 543; // เซ็ตค่าคืน
-        setNowDate(); loadDashboard();
-      }).saveEmployeeData(data);
+      Swal.fire({title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen:()=>Swal.showLoading()});
+      
+      callBackend('saveEmployeeData', { formData: data })
+        .then(msg => {
+          Swal.fire('สำเร็จ', msg, 'success');
+          document.getElementById('adminDataForm').reset();
+          document.getElementById('f_fiscal_year').value = new Date().getFullYear() + 543; // เซ็ตค่าคืน
+          setNowDate(); loadDashboard();
+        })
+        .catch(err => Swal.fire('ผิดพลาด', err.message, 'error'));
     }
 
     function switchTab(tabId, btn) {
@@ -821,11 +859,14 @@
         stamp: base64Stamp
       };
 
-      Swal.fire({title: 'กำลังอัปโหลดขึ้น Drive...', text:'ระบบกำลังจัดเก็บรูปลงในโฟลเดอร์', didOpen:()=>Swal.showLoading()});
-      google.script.run.withSuccessHandler(msg => {
-        Swal.fire('สำเร็จ', msg, 'success');
-        base64Logo = ''; base64Sig = ''; base64Stamp = ''; 
-      }).saveAdminSettings(payload);
+      Swal.fire({title: 'กำลังอัปโหลดขึ้น Drive...', text:'ระบบกำลังจัดเก็บรูปลงในโฟลเดอร์', allowOutsideClick: false, didOpen:()=>Swal.showLoading()});
+      
+      callBackend('saveAdminSettings', { settingsData: payload })
+        .then(msg => {
+          Swal.fire('สำเร็จ', msg, 'success');
+          base64Logo = ''; base64Sig = ''; base64Stamp = ''; 
+        })
+        .catch(err => Swal.fire('ผิดพลาด', err.message, 'error'));
     }
   </script>
 </body>
