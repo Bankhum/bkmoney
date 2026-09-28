@@ -428,16 +428,26 @@
           );
         }
 
-        if (!result.success) {
-          throw new Error(result.error || 'เกิดข้อผิดพลาดจาก API');
+        // รองรับทั้ง API รูปแบบใหม่ {success:true,data:{...}}
+        // และกรณีที่ backend ส่งข้อมูลไว้ที่ root โดยตรง
+        if (result.success === false) {
+          throw new Error(result.error || result.message || 'เกิดข้อผิดพลาดจาก API');
         }
 
-        return result.data;
+        if (result.data !== undefined) {
+          return result.data;
+        }
+
+        // ถ้า response เป็น object ข้อมูลโดยตรง ให้คืน object นั้น
+        if (result && typeof result === 'object') {
+          return result;
+        }
+
+        throw new Error('API ไม่ได้ส่งข้อมูลกลับมาตามรูปแบบที่ระบบต้องการ');
 
       } catch (error) {
         throw new Error(
-          'การเชื่อมต่อล้มเหลว กรุณาตรวจสอบ SCRIPT_URL และ Deploy ของ Google Apps Script: ' +
-          error.message
+          'การเชื่อมต่อล้มเหลว: ' + error.message
         );
       }
     }
@@ -542,7 +552,20 @@
       callBackend('searchEmployee', { employeeId: id })
         .then(response => {
           Swal.close();
-          const records = response.records; const settings = response.settings;
+
+          if (!response || !Array.isArray(response.records)) {
+            throw new Error(
+              'API ตอบกลับมาแต่ไม่พบ records กรุณาตรวจสอบว่า Google Apps Script เป็นเวอร์ชันล่าสุด'
+            );
+          }
+
+          const records = response.records;
+          const settings = response.settings || {};
+
+          if (records.length === 0) {
+            throw new Error('ไม่พบข้อมูลสำหรับรหัสประจำตัวนี้');
+          }
+
           if (records.length === 1) { displayResultData(records[0], settings, false); } 
           else if (records.length > 1) {
               const container = document.getElementById('roundListContainer'); container.innerHTML = '';
