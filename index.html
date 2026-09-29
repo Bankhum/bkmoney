@@ -406,91 +406,9 @@
 
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script>
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyrg5Gp2pshN9P6O75GNIF_1wKtgo9_laIBPJT2ghLUgFznds1_JCNhGiGl9TOyUUxU1g/exec';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwnCjGVb2YEmt9EvPwGjNX7fV6xPOeT7G_NLIj6n31TqymPEd2OR6Ba05P3-IvvhidKsg/exec';
     
     async function callBackend(action, payload = {}) {
-      const requestBody = JSON.stringify({ action: action, ...payload });
-
-      async function parseApiResponse(response) {
-        const rawText = await response.text();
-
-        if (!rawText || !rawText.trim()) {
-          throw new Error('API ไม่ได้ส่งข้อมูลกลับมา');
-        }
-
-        let result;
-        try {
-          result = JSON.parse(rawText);
-        } catch (parseError) {
-          throw new Error(
-            'API ส่งข้อมูลกลับมาไม่ใช่ JSON: ' +
-            rawText.substring(0, 200)
-          );
-        }
-
-        if (result.success === false) {
-          throw new Error(
-            result.error ||
-            result.message ||
-            'เกิดข้อผิดพลาดจาก API'
-          );
-        }
-
-        return result.data !== undefined ? result.data : result;
-      }
-
-      // วิธีที่ 1: POST JSON เป็น text/plain
-      try {
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), 30000);
-
-        const response = await fetch(SCRIPT_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'text/plain;charset=utf-8'
-          },
-          body: requestBody,
-          redirect: 'follow',
-          cache: 'no-store',
-          signal: controller.signal
-        });
-
-        clearTimeout(timer);
-        return await parseApiResponse(response);
-
-      } catch (firstError) {
-
-        // วิธีที่ 2: fallback สำหรับ Messenger / Facebook in-app browser
-        // ส่งเป็น application/x-www-form-urlencoded ผ่านพารามิเตอร์ data
-        try {
-          const controller2 = new AbortController();
-          const timer2 = setTimeout(() => controller2.abort(), 30000);
-
-          const formBody =
-            'data=' + encodeURIComponent(requestBody);
-
-          const response2 = await fetch(SCRIPT_URL, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
-            },
-            body: formBody,
-            redirect: 'follow',
-            cache: 'no-store',
-            signal: controller2.signal
-          });
-
-          clearTimeout(timer2);
-          return await parseApiResponse(response2);
-
-        } catch (secondError) {
-          throw new Error(
-            'การเชื่อมต่อล้มเหลว: ' +
-            secondError.message
-          );
-        }
-      }
-    }) {
       try {
         const response = await fetch(SCRIPT_URL, {
           method: 'POST',
